@@ -1,34 +1,43 @@
 import React from "react";
+import { useBooking } from "./../hooks/useBooking";
 import {
   Calendar,
   Package,
   CheckCircle,
   Clock,
 } from "lucide-react";
+import { useService } from "../hooks/useService";
 
 const DashboardStats = () => {
+  const { bookings } = useBooking();
+  const { services } = useService();
   const stats = [
     {
       title: "Total Bookings",
-      value: "156",
+      value: bookings.length,
       icon: Calendar,
       color: "bg-blue-500",
     },
     {
       title: "Active Services",
-      value: "12",
+      value: services.length,
       icon: Package,
       color: "bg-green-500",
     },
     {
       title: "Completed",
-      value: "134",
+      value: bookings.filter(
+        (booking) =>
+          booking.status === "completed"
+      ).length,
       icon: CheckCircle,
       color: "bg-purple-500",
     },
     {
       title: "Pending",
-      value: "22",
+      value: bookings.filter(
+        (booking) => booking.status === "pending"
+      ).length,
       icon: Clock,
       color: "bg-orange-500",
     },

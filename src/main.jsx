@@ -5,17 +5,20 @@ import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { ServiceProvider } from "./context/ServiceProvider.jsx";
 import { AdminProvider } from "./context/adminProvider.jsx";
+import { BookingProvider } from "./context/BookingProvider.jsx";
 
 createRoot(
   document.getElementById("root")
 ).render(
   <AdminProvider>
     <ServiceProvider>
-      <BrowserRouter>
-        <StrictMode>
-          <App />
-        </StrictMode>
-      </BrowserRouter>
+      <BookingProvider>
+        <BrowserRouter>
+          <StrictMode>
+            <App />
+          </StrictMode>
+        </BrowserRouter>
+      </BookingProvider>
     </ServiceProvider>
   </AdminProvider>
 );

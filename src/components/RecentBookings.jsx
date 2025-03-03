@@ -1,37 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useBooking } from "../hooks/useBooking";
+import { useNavigate } from "react-router-dom";
 
 const RecentBookings = () => {
-  const bookings = [
-    {
-      customer: "John Smith",
-      service: "Wedding Stage",
-      date: "2024-03-15",
-      status: "Confirmed",
-    },
-    {
-      customer: "Sarah Johnson",
-      service: "Birthday Party",
-      date: "2024-03-18",
-      status: "Pending",
-    },
-    {
-      customer: "Mike Brown",
-      service: "Corporate Event",
-      date: "2024-03-20",
-      status: "Confirmed",
-    },
-  ];
+  const { bookings, fetchBookings } =
+    useBooking();
 
+  useEffect(() => {
+    fetchBookings();
+  });
+
+  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-lg font-semibold mb-6">
-        Recent Bookings
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold mb-6">
+          Recent Bookings
+        </h2>
+        <button
+          onClick={() => navigate("/bookings")}
+          className="cursor-pointer flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          View All
+        </button>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="text-left text-sm text-gray-500">
+            <tr className="text-center text-sm text-gray-500">
               <th className="pb-4">Customer</th>
               <th className="pb-4">Service</th>
               <th className="pb-4">Date</th>
@@ -39,19 +36,34 @@ const RecentBookings = () => {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((booking, index) => (
+            {bookings.map((booking) => (
               <tr
-                key={index}
+                key={booking.id}
                 className="border-t border-gray-100"
               >
                 <td className="py-4">
-                  {booking.customer}
+                  {booking.user?.name.length > 7
+                    ? booking.user.name.slice(
+                        0,
+                        7
+                      ) + "..."
+                    : booking.user?.name}
                 </td>
                 <td className="py-4">
-                  {booking.service}
+                  {booking.services?.name.length >
+                  20
+                    ? booking.services.name.slice(
+                        0,
+                        20
+                      ) + "..."
+                    : booking.services?.name}
                 </td>
                 <td className="py-4">
-                  {booking.date}
+                  {
+                    booking.eventDate?.split(
+                      "T"
+                    )[0]
+                  }
                 </td>
                 <td className="py-4">
                   <span

@@ -24,7 +24,7 @@ const TopNav = ({ onMenuClick }) => {
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium">
-                {admin?.name.toUpperCase()}
+                {admin?.name?.toUpperCase()}
               </p>
               <p className="text-xs text-gray-500">
                 {admin.email}

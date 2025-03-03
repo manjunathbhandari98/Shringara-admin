@@ -20,12 +20,15 @@ import {
   Calendar,
   MessageSquare,
   FileText,
+  Settings,
 } from "lucide-react";
 import TopNav from "./components/Topnav";
 import Sidebar from "./components/Sidebar";
 import ManageWebsiteContent from "./pages/ManageWebsiteContent";
 import { useAdmin } from "./hooks/useAdmin";
 import AdminLogin from "./pages/Login";
+import BookingDetails from "./pages/BookingDetails";
+import MessageView from "./pages/MessageView";
 
 function App() {
   const { admin } = useAdmin();
@@ -63,6 +66,11 @@ function App() {
       icon: FileText,
       label: "Website Content",
       to: "/contents",
+    },
+    {
+      icon: Settings,
+      label: "Setting",
+      to: "/settings",
     },
   ];
   if (!admin) {
@@ -108,8 +116,16 @@ function App() {
               element={<ManageMessages />}
             />
             <Route
+              path="/message/:email"
+              element={<MessageView />}
+            />
+            <Route
               path="/contents"
               element={<ManageWebsiteContent />}
+            />
+            <Route
+              path="/booking-details/:id"
+              element={<BookingDetails />}
             />
             {/* Redirect unknown routes to Dashboard */}
             <Route

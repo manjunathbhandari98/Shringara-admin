@@ -227,6 +227,7 @@ export const ServiceProvider = ({ children }) => {
         removeSubService,
         loading,
         setServices,
+        setSelectedService,
       }}
     >
       {children}

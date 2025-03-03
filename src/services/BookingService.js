@@ -1,10 +1,10 @@
 import axios from "axios";
-
+import { getAuthToken } from "./serviceService";
 const BASE_URL = import.meta.env
   .VITE_REACT_APP_API_URL;
 
 // Create a booking
-export const bookAnEvent = async (
+export const createBooking = async (
   bookingInfo
 ) => {
   try {
@@ -60,22 +60,18 @@ export const getBookingById = async (id) => {
 };
 
 // Update booking
-export const updateBooking = async (
+export const alterBooking = async (
   id,
   updatedBooking
 ) => {
   try {
-    console.log(
-      "Updating booking:",
-      id,
-      updatedBooking
-    ); // Debug log
     const response = await axios.put(
       `${BASE_URL}/bookings/${id}`,
       updatedBooking,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getAuthToken()}`,
         },
       }
     );
@@ -98,10 +94,16 @@ export const updateBooking = async (
 };
 
 // Delete booking
-export const deleteBooking = async (id) => {
+export const removeBooking = async (id) => {
   try {
+    const token = getAuthToken();
     await axios.delete(
-      `${BASE_URL}/bookings/${id}`
+      `${BASE_URL}/bookings/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
     return {
       message: "Booking deleted successfully",

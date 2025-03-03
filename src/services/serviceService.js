@@ -73,12 +73,14 @@ export const updateService = async (
   updateData
 ) => {
   try {
+    const token = getAuthToken();
     const response = await axios.put(
       `${BASE_URL}/services/${serviceId}`,
       updateData,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -160,15 +162,19 @@ export const createSubService = async (
   subServiceData
 ) => {
   try {
+    const token = getAuthToken();
+
     const response = await axios.post(
-      `${BASE_URL}/services/${serviceId}/subservices`,
+      `${BASE_URL}/subservices/service/${serviceId}`,
       subServiceData,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
+
     return response.data;
   } catch (error) {
     throw (
@@ -182,15 +188,18 @@ export const createSubService = async (
 // Update an existing subservice
 export const updateSubService = async (
   subServiceId,
+  serviceId,
   updateData
 ) => {
   try {
+    const token = getAuthToken();
     const response = await axios.put(
-      `${BASE_URL}/subservices/${subServiceId}`,
+      `${BASE_URL}/subservices/${serviceId}/${subServiceId}`,
       updateData,
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -206,11 +215,18 @@ export const updateSubService = async (
 
 // Delete a subservice
 export const deleteSubService = async (
+  serviceId,
   subServiceId
 ) => {
   try {
+    const token = getAuthToken();
     await axios.delete(
-      `${BASE_URL}/subservices/${subServiceId}`
+      `${BASE_URL}/subservices/${serviceId}/${subServiceId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
     return {
       message: "Subservice deleted successfully",

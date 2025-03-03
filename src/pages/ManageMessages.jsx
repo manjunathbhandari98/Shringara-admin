@@ -1,112 +1,91 @@
-import React, { useState } from "react";
-import {
-  Search,
-  Star,
-  Trash2,
-  MoreVertical,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Search, Star, Trash2, MoreVertical,CheckCircle } from "lucide-react";
+import { getMessages, deleteMessage } from "../services/messageService";
+import { format } from "date-fns";
+import { isToday, isYesterday, isThisWeek, parseISO } from "date-fns";
+import { useNavigate } from "react-router-dom";
+
+const formatDate = (dateString) => {
+  const date = parseISO(dateString);
+  if (isToday(date)) return format(date, "HH:mm");
+  if (isYesterday(date)) return "Yesterday";
+  if (isThisWeek(date)) return format(date, "EEEE");
+  return format(date, "dd/MM/yy");
+};
 
 const ManageMessages = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: "1",
-      name: "Emily Wilson",
-      email: "emily.wilson@example.com",
-      subject:
-        "Inquiry about wedding decoration packages",
-      message: `Hi, I'm interested in your wedding decoration services. Could you please provide more details about your packages and pricing? We're planning our wedding for next summer.`,
-      date: "2024-03-15 14:30",
-      isStarred: true,
-      isRead: false,
-    },
-    {
-      id: "2",
-      name: "David Chen",
-      email: "david.chen@example.com",
-      subject: "Corporate event setup inquiry",
-      message: `We're organizing a corporate event next month and would like to discuss your decoration services. Please share your corporate event portfolio.`,
-      date: "2024-03-14 09:15",
-      isStarred: false,
-      isRead: true,
-    },
-    {
-      id: "3",
-      name: "Lisa Anderson",
-      email: "lisa.anderson@example.com",
-      subject:
-        "Birthday party decoration availability",
-      message: `Hello, I'm planning my daughter's sweet sixteen party and would love to know about your birthday decoration services and availability for April 15th.`,
-      date: "2024-03-13 16:45",
-      isStarred: false,
-      isRead: true,
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
-  const [searchTerm, setSearchTerm] =
-    useState("");
-  const [selectedMessages, setSelectedMessages] =
-    useState([]);
+  const navigate = useNavigate();
 
-  const toggleStar = (id) => {
-    setMessages(
-      messages.map((message) =>
-        message.id === id
-          ? {
-              ...message,
-              isStarred: !message.isStarred,
-            }
-          : message
-      )
-    );
+  const fetchMessage = async () => {
+    const messages = await getMessages();
+    setMessages(messages);
   };
 
-  const toggleMessageSelection = (id) => {
-    setSelectedMessages((prev) =>
-      prev.includes(id)
-        ? prev.filter((msgId) => msgId !== id)
-        : [...prev, id]
-    );
+  useEffect(() => {
+    fetchMessage();
+  }, []);
+
+  const handleViewMessage = (email) => {
+    navigate(`/message/${email}`);
   };
 
-  const deleteMessages = () => {
+  const confirmDeleteMessage = (id) => {
+    setOpenMenuId(null);
+    setMessageToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteMessage = async () => {
+    if (messageToDelete) {
+      await deleteMessage(messageToDelete);
+      setMessages(messages.filter((msg) => msg.id !== messageToDelete));
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
+    }
+  };
+
+  const confirmBulkDelete = () => {
+    setShowBulkDeleteModal(true);
+  };
+
+  const handleDeleteSelected = async () => {
+  try {
+    // Send delete request for each selected message
+    await Promise.all(selectedMessages.map((id) => deleteMessage(id)));
+
+    // Remove deleted messages from state
+    setMessages(messages.filter((msg) => !selectedMessages.includes(msg.id)));
+
+    // Clear selected messages and close modal
+    setSelectedMessages([]);
+    setShowBulkDeleteModal(false);
+  } catch (error) {
+    console.error("Failed to delete messages:", error);
+  }
+};
+
+
+  const handleMarkAsRead = () => {
     setMessages(
-      messages.filter(
-        (message) =>
-          !selectedMessages.includes(message.id)
+      messages.map((msg) =>
+        selectedMessages.includes(msg.id) ? { ...msg, isRead: true } : msg
       )
     );
     setSelectedMessages([]);
   };
 
-  const markAsRead = () => {
-    setMessages(
-      messages.map((message) =>
-        selectedMessages.includes(message.id)
-          ? { ...message, isRead: true }
-          : message
-      )
-    );
-  };
-
-  const filteredMessages = messages.filter(
-    (message) =>
-      message.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      message.subject
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      message.message
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Manage Messages
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-800">Manage Messages</h1>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -114,97 +93,136 @@ const ManageMessages = () => {
             placeholder="Search messages..."
             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
-            onChange={(e) =>
-              setSearchTerm(e.target.value)
-            }
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
       {selectedMessages.length > 0 && (
-        <div className="bg-gray-50 px-4 py-2 rounded-lg mb-4 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            {selectedMessages.length} message(s)
-            selected
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={markAsRead}
-              className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-            >
-              Mark as read
-            </button>
-            <button
-              onClick={deleteMessages}
-              className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
+  <div className="flex justify-end space-x-2 mb-4">
+    <button
+      onClick={handleMarkAsRead}
+      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg"
+    >
+      <CheckCircle className="w-5 h-5" />
+      <span>Mark as Read</span>
+    </button>
+    <button
+      onClick={confirmBulkDelete}
+      className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg"
+    >
+      <Trash2 className="w-5 h-5" />
+      <span>Delete</span>
+    </button>
+  </div>
+)}
+
 
       <div className="bg-white rounded-lg shadow-sm">
-        {filteredMessages.map((message) => (
+        {messages.map((message) => (
           <div
             key={message.id}
-            className={`border-b border-gray-100 p-4 hover:bg-gray-50 ${
-              !message.isRead ? "bg-blue-50" : ""
-            }`}
+            className={`border-b border-gray-100 p-4 hover:bg-gray-50 ${!message.isRead ? "bg-blue-50" : ""}`}
+            onClick={() => handleViewMessage(message.email)}
           >
             <div className="flex items-center space-x-4">
               <input
                 type="checkbox"
-                checked={selectedMessages.includes(
-                  message.id
-                )}
-                onChange={() =>
-                  toggleMessageSelection(
-                    message.id
-                  )
-                }
+                checked={selectedMessages.includes(message.id)}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  setSelectedMessages((prev) =>
+                    prev.includes(message.id)
+                      ? prev.filter((msgId) => msgId !== message.id)
+                      : [...prev, message.id]
+                  );
+                }}
                 className="rounded text-blue-600 focus:ring-blue-500"
               />
+
               <button
-                onClick={() =>
-                  toggleStar(message.id)
-                }
-                className={`focus:outline-none ${
-                  message.isStarred
-                    ? "text-yellow-400"
-                    : "text-gray-300"
-                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMessages(
+                    messages.map((msg) =>
+                      msg.id === message.id ? { ...msg, isStarred: !msg.isStarred } : msg
+                    )
+                  );
+                }}
+                className={`focus:outline-none ${message.isStarred ? "text-yellow-400" : "text-gray-300"}`}
               >
                 <Star className="w-5 h-5" />
               </button>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {message.name}
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">
-                      {message.date}
-                    </span>
-                    <button className="text-gray-400 hover:text-gray-600">
+                  <h3 className="text-sm font-medium text-gray-900">{message.name}</h3>
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(openMenuId === message.id ? null : message.id);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 p-3"
+                    >
                       <MoreVertical className="w-4 h-4" />
                     </button>
+                    {openMenuId === message.id && (
+                      <div className="absolute top-full right-0 bg-white shadow-md rounded-md py-2 w-36 z-10 mt-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDeleteMessage(message.id);
+                          }}
+                          className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 w-full"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" /> Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  {message.email}
-                </p>
-                <p className="text-sm font-medium text-gray-800 mt-1">
-                  {message.subject}
-                </p>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                  {message.message}
-                </p>
+                <p className="text-sm text-gray-600">{message.email}</p>
+                <p className="text-sm font-medium text-gray-800 mt-1">{message.subject}</p>
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{message.message}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold">Confirm Deletion</h2>
+            <p className="text-sm text-gray-600">Are you sure you want to delete this message?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">
+                Cancel
+              </button>
+              <button onClick={handleDeleteMessage} className="px-4 py-2 bg-red-600 text-white rounded-lg">
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold">Confirm Bulk Deletion</h2>
+            <p className="text-sm text-gray-600">Are you sure you want to delete the selected messages?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button onClick={() => setShowBulkDeleteModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">
+                Cancel
+              </button>
+              <button onClick={handleDeleteSelected} className="px-4 py-2 bg-red-600 text-white rounded-lg">
+                Yes, Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -5,6 +5,8 @@ import React, {
 import { useService } from "./../hooks/useService";
 import {
   deleteService,
+  deleteSubService,
+  updateSubService,
   uploadImage,
 } from "./../services/serviceService";
 import {
@@ -15,6 +17,9 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import UpdateServiceModal from "../components/UpdateServiceModal";
+import CreateSubServiceModal from "../components/CreateSubServiceModal";
+import UpdateSubServiceModal from "../components/UpdateSubServiceModal";
 
 const ManageServices = () => {
   const [expanded, setExpanded] = useState({});
@@ -22,22 +27,55 @@ const ManageServices = () => {
     useState();
   const [editingService, setEditingService] =
     useState(null);
+  const [
+    isSubserviceModalOpen,
+    setIsSubserviceModalOpen,
+  ] = useState(false);
+  const [
+    isUpdateModalOpen,
+    setIsUpdateModalOpen,
+  ] = useState(false);
+  const [
+    selectedSubService,
+    setSelectedSubService,
+  ] = useState(null);
+  const [
+    isUpdateSubServiceModalOpen,
+    setIsUpdateSubServiceModalOpen,
+  ] = useState(false);
   const {
     services,
     fetchSubServices,
     addService,
     setServices,
     selectedService,
+    setSelectedService,
   } = useService();
 
   const toggleExpand = async (id) => {
+    setExpanded((prev) => {
+      const isCurrentlyExpanded = prev[id];
+      return { [id]: !isCurrentlyExpanded }; // Close others
+    });
+
     if (!expanded[id]) {
-      await fetchSubServices(id);
+      const subServices = await fetchSubServices(
+        id
+      );
+
+      // Find the full service details from `services` array
+      const fullServiceDetails = services.find(
+        (service) => service.id === id
+      );
+
+      // Store full service details in `selectedService`
+      if (fullServiceDetails) {
+        setSelectedService({
+          ...fullServiceDetails,
+          subServices, // Add sub-services here
+        });
+      }
     }
-    setExpanded((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
   };
 
   const [formData, setFormData] = useState({
@@ -115,6 +153,50 @@ const ManageServices = () => {
     }
   };
 
+  const handleDeleteSubService = async (
+    serviceId,
+    subServiceId
+  ) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this sub-service?"
+      )
+    ) {
+      const result = await deleteSubService(
+        serviceId,
+        subServiceId
+      );
+      alert(result.message);
+
+      // Update the state to remove the deleted sub-service
+      setSelectedService(
+        (prevSelectedService) => ({
+          ...prevSelectedService,
+          subServices:
+            prevSelectedService.subServices.filter(
+              (sub) => sub.id !== subServiceId
+            ),
+        })
+      );
+
+      // Also update the main services list
+      setServices((prevServices) =>
+        prevServices.map((service) =>
+          service.id === serviceId
+            ? {
+                ...service,
+                subServices:
+                  service.subServices.filter(
+                    (sub) =>
+                      sub.id !== subServiceId
+                  ),
+              }
+            : service
+        )
+      );
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
@@ -143,7 +225,7 @@ const ManageServices = () => {
             </tr>
           </thead>
           <tbody>
-            {services.map((service) => (
+            {services?.map((service) => (
               <React.Fragment key={service.id}>
                 <tr className="border-b">
                   <td className="px-6 py-4 font-semibold">
@@ -152,22 +234,15 @@ const ManageServices = () => {
 
                   <td className="px-6 py-4 flex space-x-4">
                     <button
-                      className="text-blue-600 hover:text-blue-900 cursor-pointer"
                       onClick={() => {
                         setEditingService(
                           service
-                        ); // Set selected service for editing
-                        setFormData({
-                          name: service.name,
-                          description:
-                            service.description ||
-                            "",
-                          imageUrl:
-                            service.imageUrl ||
-                            "",
-                        });
-                        setIsModalOpen(true);
+                        ); // Set the service to be edited
+                        setIsUpdateModalOpen(
+                          true
+                        ); // Open the update modal
                       }}
+                      className="text-blue-600 hover:text-blue-900 cursor-pointer"
                     >
                       <Edit className="w-5 h-5" />
                     </button>
@@ -179,13 +254,24 @@ const ManageServices = () => {
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
-                    <button className="text-green-600 hover:text-green-900 cursor-pointer">
+                    <button
+                      onClick={() => {
+                        // Set the selected service
+                        setSelectedService(
+                          service
+                        );
+                        setIsSubserviceModalOpen(
+                          true
+                        );
+                      }}
+                      className="text-green-600 hover:text-green-900 cursor-pointer"
+                    >
                       <Plus className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() =>
-                        toggleExpand(service.id)
-                      }
+                      onClick={() => {
+                        toggleExpand(service.id);
+                      }}
                       className="text-gray-600 hover:text-gray-900 cursor-pointer"
                     >
                       {expanded[service.id] ? (
@@ -218,7 +304,7 @@ const ManageServices = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {selectedService.map(
+                          {service?.subServices?.map(
                             (sub) => (
                               <tr
                                 key={sub.id}
@@ -232,10 +318,28 @@ const ManageServices = () => {
                                 </td>
 
                                 <td className="px-6 py-3 flex space-x-3">
-                                  <button className="text-blue-600 hover:text-blue-900 cursor-pointer">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSubService(
+                                        sub
+                                      ),
+                                        setIsUpdateSubServiceModalOpen(
+                                          true
+                                        );
+                                    }}
+                                    className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                                  >
                                     <Edit className="w-5 h-5" />
                                   </button>
-                                  <button className="text-red-600 hover:text-red-900 cursor-pointer">
+                                  <button
+                                    onClick={() => {
+                                      handleDeleteSubService(
+                                        service.id,
+                                        sub.id
+                                      );
+                                    }}
+                                    className="text-red-600 hover:text-red-900 cursor-pointer"
+                                  >
                                     <Trash2 className="w-5 h-5" />
                                   </button>
                                 </td>
@@ -252,15 +356,93 @@ const ManageServices = () => {
           </tbody>
         </table>
       </div>
+      {isUpdateModalOpen && editingService && (
+        <UpdateServiceModal
+          service={editingService}
+          onClose={() =>
+            setIsUpdateModalOpen(false)
+          }
+          onUpdate={(updatedService) => {
+            setServices((prevServices) =>
+              prevServices.map((service) =>
+                service.id === updatedService.id
+                  ? updatedService
+                  : service
+              )
+            );
+            setIsUpdateModalOpen(false);
+          }}
+        />
+      )}
+
+      {isSubserviceModalOpen &&
+        selectedService && (
+          <CreateSubServiceModal
+            service={selectedService}
+            onClose={() =>
+              setIsSubserviceModalOpen(false)
+            }
+            onSubServiceCreated={(
+              newSubService
+            ) => {
+              setServices((prevServices) =>
+                prevServices.map((service) =>
+                  service.id ===
+                  selectedService.id
+                    ? {
+                        ...service,
+                        subServices: [
+                          ...(service.subServices ||
+                            []),
+                          newSubService,
+                        ],
+                      }
+                    : service
+                )
+              );
+            }}
+          />
+        )}
+
+      {isUpdateSubServiceModalOpen &&
+        selectedService && (
+          <UpdateSubServiceModal
+            service={selectedService}
+            subService={selectedSubService}
+            onClose={() =>
+              setIsUpdateSubServiceModalOpen(
+                false
+              )
+            }
+            onUpdate={(updatedSubService) => {
+              setServices((prevServices) =>
+                prevServices.map((service) =>
+                  service.id ===
+                  selectedService.id
+                    ? {
+                        ...service,
+                        subServices:
+                          service.subServices.map(
+                            (sub) =>
+                              sub.id ===
+                              updatedSubService.id
+                                ? updatedSubService
+                                : sub
+                          ),
+                      }
+                    : service
+                )
+              );
+            }}
+          />
+        )}
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold text-gray-900">
-                {editingService
-                  ? "Edit Service"
-                  : "Add New Service"}
+                Add New Service
               </h2>
               <button
                 onClick={() =>

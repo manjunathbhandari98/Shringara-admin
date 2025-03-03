@@ -4,10 +4,7 @@ import React, {
 } from "react";
 import { Edit, Trash2 } from "lucide-react";
 import EditBookingModal from "../components/EditBookingModal";
-import {
-  getAllBookings,
-  deleteBooking,
-} from "../services/BookingService";
+import { useBooking } from "../hooks/useBooking";
 
 const statusColors = {
   pending: "bg-yellow-200 text-yellow-800",
@@ -17,7 +14,12 @@ const statusColors = {
 };
 
 const ManageBookings = () => {
-  const [bookings, setBookings] = useState([]);
+  const {
+    bookings,
+    setBookings,
+    deleteBooking,
+    updateBooking,
+  } = useBooking();
 
   const [selectedBooking, setSelectedBooking] =
     useState(null);
@@ -28,10 +30,10 @@ const ManageBookings = () => {
   const openEditModal = (booking) => {
     setSelectedBooking(booking);
   };
+
   const closeEditModal = () =>
     setSelectedBooking(null);
 
-  // Function to handle booking deletion
   const handleDeleteBooking = async (id) => {
     if (
       !window.confirm(
@@ -39,7 +41,6 @@ const ManageBookings = () => {
       )
     )
       return;
-
     try {
       await deleteBooking(id);
       setBookings((prev) =>
@@ -57,78 +58,41 @@ const ManageBookings = () => {
     }
   };
 
-  // Function to update the booking list when a booking is edited
-  const handleBookingUpdate = (
+  const handleBookingUpdate = async (
+    bookingId,
     updatedBooking
   ) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === updatedBooking.id
-          ? updatedBooking
-          : b
-      )
-    );
-    closeEditModal();
-  };
-
-  const fetchBookings = async () => {
     try {
-      const response = await getAllBookings();
-      if (Array.isArray(response)) {
-        const formattedBookings = response.map(
-          (booking) => ({
-            userId: booking.user?.id || null,
-            location: booking.location,
-            serviceId:
-              booking.services?.id || null,
-            subServiceId:
-              booking.subService?.id || null,
-            id: booking.id,
-            customer:
-              booking.user?.name || "Unknown",
-            service:
-              booking.services?.name || "N/A",
-            date:
-              booking.eventDate?.split("T")[0] ||
-              "N/A",
-            status:
-              booking.status?.toLowerCase() ||
-              "pending",
-            amount: `₹${
-              booking.subService?.price || 0
-            }`,
-            contact: booking.user?.phone || "N/A",
-          })
-        );
-        setBookings(formattedBookings);
-      } else {
-        console.error(
-          "Unexpected API response format",
-          response
-        );
-        setBookings([]);
-      }
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, ...updatedBooking }
+            : b
+        )
+      );
+
+      closeEditModal();
     } catch (error) {
       console.error(
-        "Error fetching bookings:",
+        "Error updating booking:",
         error
       );
-      setBookings([]);
+      alert("Failed to update booking");
     }
   };
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
   const filteredBookings = bookings.filter(
-    (booking) =>
-      booking.customer
-        .toLowerCase()
-        .includes(search.toLowerCase()) &&
-      (filterStatus
-        ? booking.status === filterStatus
-        : true)
+    (booking) => {
+      return (
+        (booking.user?.name
+          ?.toLowerCase()
+          ?.includes(search.toLowerCase()) ??
+          false) &&
+        (filterStatus
+          ? booking.status === filterStatus
+          : true)
+      );
+    }
   );
 
   return (
@@ -152,7 +116,7 @@ const ManageBookings = () => {
           onChange={(e) =>
             setFilterStatus(e.target.value)
           }
-          className="p-2 border rounded-lg focus:none "
+          className="p-2 border rounded-lg focus:none"
         >
           <option value="">All</option>
           <option value="pending">Pending</option>
@@ -202,16 +166,20 @@ const ManageBookings = () => {
                 className="border-b hover:bg-gray-50"
               >
                 <td className="px-6 py-3">
-                  {booking.customer}
+                  {booking.user?.name}
                 </td>
                 <td className="px-6 py-3">
-                  {booking.service}
+                  {booking.subService.name}
                 </td>
                 <td className="px-6 py-3">
-                  {booking.date}
+                  {
+                    booking.eventDate.split(
+                      "T"
+                    )[0]
+                  }
                 </td>
                 <td className="px-6 py-3 font-semibold">
-                  {booking.amount}
+                  {booking.subService.price}
                 </td>
                 <td
                   className={`px-4 py-2 rounded-lg text-sm font-semibold ${
@@ -219,19 +187,19 @@ const ManageBookings = () => {
                   }`}
                 >
                   {booking.status
-                    .charAt(0)
+                    ?.charAt(0)
                     .toUpperCase() +
                     booking.status.slice(1)}
                 </td>
                 <td className="px-6 py-3">
-                  {booking.contact}
+                  {booking.user?.phone}
                 </td>
                 <td className="px-6 py-3 text-center flex justify-center gap-4">
                   <button
                     className="text-blue-600 hover:text-blue-800 transition"
-                    onClick={() =>
-                      openEditModal(booking)
-                    }
+                    onClick={() => {
+                      openEditModal(booking);
+                    }}
                   >
                     <Edit size={18} />
                   </button>
@@ -256,6 +224,7 @@ const ManageBookings = () => {
         <EditBookingModal
           booking={selectedBooking}
           onClose={closeEditModal}
+          onUpdate={handleBookingUpdate}
         />
       )}
     </div>
