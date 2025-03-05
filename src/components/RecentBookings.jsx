@@ -28,7 +28,7 @@ const RecentBookings = () => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="text-center text-sm text-gray-500">
+            <tr className=" text-sm text-gray-500">
               <th className="pb-4">Customer</th>
               <th className="pb-4">Service</th>
               <th className="pb-4">Date</th>
@@ -39,22 +39,22 @@ const RecentBookings = () => {
             {bookings.map((booking) => (
               <tr
                 key={booking.id}
-                className="border-t border-gray-100"
+                className="border-t border-gray-100 text-center"
               >
                 <td className="py-4">
-                  {booking.user?.name.length > 7
+                  {booking.user?.name.length > 12
                     ? booking.user.name.slice(
                         0,
-                        7
+                        12
                       ) + "..."
                     : booking.user?.name}
                 </td>
                 <td className="py-4">
                   {booking.services?.name.length >
-                  20
+                  27
                     ? booking.services.name.slice(
                         0,
-                        20
+                        27
                       ) + "..."
                     : booking.services?.name}
                 </td>

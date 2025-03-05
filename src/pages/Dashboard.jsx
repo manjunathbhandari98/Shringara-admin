@@ -12,12 +12,12 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <ServicesOverview />
-        <PortfolioSection />
+
+        <MessagesSection />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="mt-6">
         <RecentBookings />
-        <MessagesSection />
       </div>
     </div>
   );

@@ -1,74 +1,168 @@
-import React, { useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
 import {
   Upload,
   Trash2,
   Edit2,
   X,
 } from "lucide-react";
+import {
+  getPortfolio,
+  createPortfolio,
+  updatePortfolio,
+  deletePortfolio,
+} from "../services/portfolioService";
+import { useService } from "../hooks/useService";
+import { uploadImage } from "../services/serviceService";
+import DeleteConfirmationModal from "../components/DeleteConfirmationPopup";
 
 const ManagePortfolio = () => {
   const [portfolioItems, setPortfolioItems] =
-    useState([
-      {
-        id: "1",
-        title: "Luxury Wedding Setup",
-        category: "Wedding",
-        image:
-          "https://images.unsplash.com/photo-1519167758481-83f550bb49b3",
-        date: "2024-03-15",
-      },
-      {
-        id: "2",
-        title: "Corporate Event",
-        category: "Corporate",
-        image:
-          "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3",
-        date: "2024-03-10",
-      },
-      {
-        id: "3",
-        title: "Birthday Decoration",
-        category: "Birthday",
-        image:
-          "https://images.unsplash.com/photo-1478146896981-b80fe463b330",
-        date: "2024-03-05",
-      },
-    ]);
-
+    useState([]);
+  const [formData, setFormData] = useState({
+    title: "",
+    imageUrl: "",
+    services: { id: "" },
+  });
   const [isModalOpen, setIsModalOpen] =
     useState(false);
   const [editingItem, setEditingItem] =
     useState(null);
+  const { services } = useService();
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
+  const [deleteItemId, setDeleteItemId] =
+    useState(null);
 
-  const handleDelete = (id) => {
-    setPortfolioItems(
-      portfolioItems.filter(
-        (item) => item.id !== id
-      )
-    );
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      const response = await getPortfolio();
+      setPortfolioItems(response);
+    };
+    fetchPortfolio();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]:
+        name === "services"
+          ? { id: value }
+          : value,
+    }));
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const imageUrl = await uploadImage(file);
+        setFormData((prevData) => ({
+          ...prevData,
+          imageUrl,
+        }));
+      } catch (error) {
+        console.error(
+          "Image upload failed:",
+          error
+        );
+      }
+    }
   };
 
   const handleEdit = (item) => {
     setEditingItem(item);
+    setFormData({
+      title: item.title,
+      imageUrl: item.imageUrl,
+      services: { id: item.services.id },
+    });
     setIsModalOpen(true);
   };
 
+  const handleDeleteClick = (id) => {
+    setDeleteItemId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteItemId) {
+      await deletePortfolio(deleteItemId);
+      setShowDeleteModal(false);
+      setDeleteItemId(null);
+      const updatedPortfolio =
+        await getPortfolio();
+      setPortfolioItems(updatedPortfolio);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (
+      !formData.title ||
+      !formData.imageUrl ||
+      !formData.services.id
+    ) {
+      console.error(
+        "Please fill all required fields."
+      );
+      return;
+    }
+    const formattedData = {
+      title: formData.title,
+      imageUrl: formData.imageUrl,
+      services: { id: formData.services.id },
+    };
+    try {
+      if (editingItem) {
+        await updatePortfolio(
+          editingItem.id,
+          formattedData
+        );
+      } else {
+        await createPortfolio(formattedData);
+      }
+      const updatedPortfolio =
+        await getPortfolio();
+      setPortfolioItems(updatedPortfolio);
+      resetForm();
+    } catch (error) {
+      console.error(
+        "Error saving portfolio:",
+        error
+      );
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      imageUrl: "",
+      services: { id: "" },
+    });
+    setEditingItem(null);
+    setIsModalOpen(false);
+  };
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
           Manage Portfolio
         </h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
         >
-          <Upload className="w-4 h-4 mr-2" />
-          Add New Item
+          <Upload className="w-4 h-4 mr-2" /> Add
+          New Item
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {portfolioItems.map((item) => (
           <div
             key={item.id}
@@ -76,7 +170,7 @@ const ManagePortfolio = () => {
           >
             <div className="relative h-48">
               <img
-                src={item.image}
+                src={item.imageUrl}
                 alt={item.title}
                 className="w-full h-full object-cover"
               />
@@ -89,7 +183,7 @@ const ManagePortfolio = () => {
                 </button>
                 <button
                   onClick={() =>
-                    handleDelete(item.id)
+                    handleDeleteClick(item.id)
                   }
                   className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-100"
                 >
@@ -102,10 +196,9 @@ const ManagePortfolio = () => {
                 {item.title}
               </h3>
               <p className="text-sm text-gray-500">
-                {item.category}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {item.date}
+                {services.find(
+                  (s) => s.id === item.services.id
+                )?.name || "Unknown"}
               </p>
             </div>
           </div>
@@ -113,8 +206,8 @@ const ManagePortfolio = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
                 {editingItem
@@ -122,67 +215,85 @@ const ManagePortfolio = () => {
                   : "Add New Portfolio Item"}
               </h2>
               <button
-                onClick={() =>
-                  setIsModalOpen(false)
-                }
+                onClick={resetForm}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form className="space-y-4">
+            <form
+              className="space-y-4"
+              onSubmit={handleSubmit}
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Title
                 </label>
                 <input
                   type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Enter title"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Category
                 </label>
-                <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                  <option value="Wedding">
-                    Wedding
+                <select
+                  name="services"
+                  value={
+                    formData.services.id || ""
+                  }
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">
+                    Select a Service
                   </option>
-                  <option value="Corporate">
-                    Corporate
-                  </option>
-                  <option value="Birthday">
-                    Birthday
-                  </option>
-                  <option value="Other">
-                    Other
-                  </option>
+                  {services.map((service) => (
+                    <option
+                      key={service.id}
+                      value={service.id}
+                    >
+                      {service.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Image URL
+                  Image
                 </label>
                 <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter image URL"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm p-2"
                 />
+                {formData.imageUrl && (
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    className="mt-2 w-full h-32 object-cover rounded-md"
+                  />
+                )}
               </div>
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    setIsModalOpen(false)
-                  }
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={resetForm}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm"
                 >
                   {editingItem
                     ? "Save Changes"
@@ -193,6 +304,12 @@ const ManagePortfolio = () => {
           </div>
         </div>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 };

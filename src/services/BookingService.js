@@ -75,10 +75,6 @@ export const alterBooking = async (
         },
       }
     );
-    console.log(
-      "Update response:",
-      response.data
-    ); // Debug log
     return response.data;
   } catch (error) {
     console.error(

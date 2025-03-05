@@ -19,12 +19,11 @@ import {
   Image as ImageIcon,
   Calendar,
   MessageSquare,
-  FileText,
-  Settings,
+  Settings2,
 } from "lucide-react";
 import TopNav from "./components/Topnav";
 import Sidebar from "./components/Sidebar";
-import ManageWebsiteContent from "./pages/ManageWebsiteContent";
+import Settings from "./pages/Settings";
 import { useAdmin } from "./hooks/useAdmin";
 import AdminLogin from "./pages/Login";
 import BookingDetails from "./pages/BookingDetails";
@@ -62,14 +61,10 @@ function App() {
       label: "Manage Messages",
       to: "/messages",
     },
+
     {
-      icon: FileText,
-      label: "Website Content",
-      to: "/contents",
-    },
-    {
-      icon: Settings,
-      label: "Setting",
+      icon: Settings2,
+      label: "Settings",
       to: "/settings",
     },
   ];
@@ -119,13 +114,14 @@ function App() {
               path="/message/:email"
               element={<MessageView />}
             />
-            <Route
-              path="/contents"
-              element={<ManageWebsiteContent />}
-            />
+
             <Route
               path="/booking-details/:id"
               element={<BookingDetails />}
+            />
+            <Route
+              path="/settings"
+              element={<Settings />}
             />
             {/* Redirect unknown routes to Dashboard */}
             <Route
