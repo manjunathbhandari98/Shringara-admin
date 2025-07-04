@@ -1,19 +1,9 @@
 /* eslint-disable react/prop-types */
-import React, {
-  useEffect,
-  useState,
-} from "react";
-import {
-  Link,
-  useLocation,
-} from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { fetchSettings } from "../services/settingsService";
 
-const Sidebar = ({
-  items,
-  isOpen,
-  toggleSidebar,
-}) => {
+const Sidebar = ({ items, isOpen, toggleSidebar }) => {
   const location = useLocation(); // Get the current route
   const [logoUrl, setLogoUrl] = useState();
 
@@ -24,7 +14,7 @@ const Sidebar = ({
 
   useEffect(() => {
     fetchLogo();
-  });
+  }, []);
 
   return (
     <aside
@@ -34,19 +24,14 @@ const Sidebar = ({
     >
       {/* Sidebar Header */}
       <div className="px-4">
-        <img
-          src={logoUrl}
-          width={100}
-          height={80}
-        />
+        <img src={logoUrl} width={100} height={80} />
       </div>
 
       {/* Navigation Links */}
       <nav className="mt-8">
         {items.map((item, index) => {
           // Check if the current route matches the item's route
-          const isActive =
-            location.pathname === item.to;
+          const isActive = location.pathname === item.to;
 
           return (
             <Link
@@ -63,11 +48,7 @@ const Sidebar = ({
 
               {/* Show text label only if sidebar is open and on larger screens */}
               {isOpen && (
-                <span
-                  className={`hidden sm:inline ${
-                    isOpen ? "ml-3" : ""
-                  }`}
-                >
+                <span className={`hidden sm:inline ${isOpen ? "ml-3" : ""}`}>
                   {item.label}
                 </span>
               )}
@@ -77,10 +58,7 @@ const Sidebar = ({
       </nav>
       {/* Mobile Toggle Button */}
       <div className="sm:hidden absolute top-4 right-4">
-        <button
-          onClick={toggleSidebar}
-          className="text-gray-600"
-        >
+        <button onClick={toggleSidebar} className="text-gray-600">
           {isOpen ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
