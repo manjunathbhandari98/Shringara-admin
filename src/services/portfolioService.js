@@ -1,12 +1,9 @@
 import axios from "axios";
 import { getAuthToken } from "./serviceService";
-const BASE_URL = import.meta.env
-  .VITE_REACT_APP_API_URL;
+const BASE_URL = import.meta.env.VITE_REACT_APP_API_URL;
 export const getPortfolio = async () => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/portfolio`
-    );
+    const response = await axios.get(`${BASE_URL}/portfolio`);
     return response.data;
   } catch (error) {
     throw new error(error);
@@ -15,44 +12,31 @@ export const getPortfolio = async () => {
 
 export const getPortfolioById = async (id) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/portfolio/${id}`
-    );
+    const response = await axios.get(`${BASE_URL}/portfolio/${id}`);
   } catch (error) {
     throw new error(error);
   }
 };
-
-export const createPortfolio = async (
-  portfolioData
-) => {
+export const createPortfolio = async (portfolioData) => {
   try {
     const token = getAuthToken();
-    const response = await axios.post(
-      `${BASE_URL}/portfolio`,
-      portfolioData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+
+    const response = await axios.post(`${BASE_URL}/portfolio`, portfolioData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data ||
-      "Can't Create Portfolio at the moment..,"
-    );
+    throw error.response?.data || "Can't Create Portfolio at the moment..,";
   }
 };
 
 // update portfolio
 
-export const updatePortfolio = async (
-  id,
-  updatedData
-) => {
+export const updatePortfolio = async (id, updatedData) => {
   try {
     const token = getAuthToken();
     const response = await axios.put(
@@ -60,17 +44,13 @@ export const updatePortfolio = async (
       updatedData,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
     );
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data ||
-      "Can't update Portfolio at the moment"
-    );
+    throw error.response?.data || "Can't update Portfolio at the moment";
   }
 };
 
@@ -89,9 +69,6 @@ export const deletePortfolio = async (id) => {
     );
     return "Portfolio Deleted Successfully";
   } catch (error) {
-    throw (
-      error.response?.data ||
-      "Can't Delete At the moment"
-    );
+    throw error.response?.data || "Can't Delete At the moment";
   }
 };

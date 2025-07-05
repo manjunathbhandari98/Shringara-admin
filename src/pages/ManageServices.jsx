@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import CreateSubServiceModal from "../components/CreateSubServiceModal";
+import DeleteConfirmationModal from "../components/DeleteConfirmationPopup";
 import UpdateServiceModal from "../components/UpdateServiceModal";
 import UpdateSubServiceModal from "../components/UpdateSubServiceModal";
 import { useService } from "./../hooks/useService";
@@ -15,6 +17,8 @@ const ManageServices = () => {
   const [selectedSubService, setSelectedSubService] = useState(null);
   const [isUpdateSubServiceModalOpen, setIsUpdateSubServiceModalOpen] =
     useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { serviceId, subServiceId }
 
   const {
     services,
@@ -74,7 +78,7 @@ const ManageServices = () => {
     e.preventDefault();
 
     if (!formData.name || !formData.imageUrl) {
-      alert("Please fill required fields.");
+      toast.error("Please fill required fields.");
       return;
     }
 
@@ -101,35 +105,57 @@ const ManageServices = () => {
     setIsModalOpen(false);
   };
 
-  const handleDelete = async (serviceId) => {
-    if (window.confirm("Are you sure you want to delete this service?")) {
-      const result = await deleteService(serviceId);
-      alert(result.message);
-      setServices((prev) => prev.filter((service) => service.id !== serviceId));
-    }
+  // Replace previous handleDelete
+  const handleDelete = (serviceId) => {
+    setDeleteTarget({ type: "service", serviceId });
+    setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteSubService = async (serviceId, subServiceId) => {
-    if (window.confirm("Are you sure you want to delete this sub-service?")) {
-      const result = await deleteSubService(serviceId, subServiceId);
-      alert(result.message);
-      setSelectedService((prev) => ({
-        ...prev,
-        subServices: prev.subServices.filter((sub) => sub.id !== subServiceId),
-      }));
+  // Update existing handleDeleteSubService
+  const handleDeleteSubService = (serviceId, subServiceId) => {
+    setDeleteTarget({ type: "subService", serviceId, subServiceId });
+    setIsDeleteModalOpen(true);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "service") {
+      const result = await deleteService(deleteTarget.serviceId);
+      toast.success(result.message);
       setServices((prev) =>
-        prev.map((service) =>
-          service.id === serviceId
-            ? {
-                ...service,
-                subServices: service.subServices.filter(
-                  (sub) => sub.id !== subServiceId
-                ),
-              }
-            : service
-        )
+        prev.filter((service) => service.id !== deleteTarget.serviceId)
+      );
+    } else if (deleteTarget.type === "subService") {
+      const { serviceId, subServiceId } = deleteTarget;
+      const result = await deleteSubService(serviceId, subServiceId);
+      toast.success(result.message);
+
+      setSelectedService((prev) => {
+        if (!prev || !prev.subServices) return prev;
+        return {
+          ...prev,
+          subServices: prev.subServices.filter(
+            (sub) => sub.id !== subServiceId
+          ),
+        };
+      });
+
+      setServices((prev) =>
+        prev.map((service) => {
+          if (service.id !== serviceId) return service;
+          return {
+            ...service,
+            subServices: (service.subServices || []).filter(
+              (sub) => sub.id !== subServiceId
+            ),
+          };
+        })
       );
     }
+
+    setIsDeleteModalOpen(false);
+    setDeleteTarget(null);
   };
 
   return (
@@ -390,6 +416,18 @@ const ManageServices = () => {
               )
             );
           }}
+        />
+      )}
+
+      {isDeleteModalOpen && (
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          onConfirm={onConfirmDelete}
+          item={deleteTarget?.type === "service" ? "service" : "sub-service"}
         />
       )}
     </div>

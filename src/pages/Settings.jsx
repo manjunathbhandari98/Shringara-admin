@@ -1,5 +1,6 @@
 import { Edit } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   addAdmin,
@@ -140,7 +141,7 @@ const SettingsPage = () => {
       !newAdmin.phone ||
       !newAdmin.password
     ) {
-      alert("Please fill in all fields.");
+      toast.error("Please fill in all fields.");
       return;
     }
 
@@ -154,7 +155,7 @@ const SettingsPage = () => {
 
     try {
       await addAdmin(adminData); // Send data to the API
-      alert("Admin added successfully!");
+      toast.success("Admin added successfully!");
 
       setAdmins([...admins, adminData]); // Update state to reflect the new admin
       setNewAdmin({
@@ -166,7 +167,7 @@ const SettingsPage = () => {
       setShowAddAdminForm(false);
     } catch (error) {
       console.error("Error adding admin:", error);
-      alert("Failed to add admin.");
+      toast.error("Failed to add admin.");
     }
   };
 
@@ -196,7 +197,7 @@ const SettingsPage = () => {
       setShowEditAdminForm(false);
     } catch (error) {
       console.error("Error updating admin:", error);
-      alert("Failed to update admin.");
+      toast.error("Failed to update admin.");
     }
   };
 
@@ -224,7 +225,7 @@ const SettingsPage = () => {
       }
 
       await addDomain(requestData);
-      alert("Domain added successfully!");
+      toast.success("Domain added successfully!");
       const updatedDomains = await getDomain();
       setDomains(updatedDomains);
       setShowDomainForm(false);
@@ -236,7 +237,7 @@ const SettingsPage = () => {
       });
     } catch (error) {
       console.error("Error adding domain:", error);
-      alert("Failed to add domain.");
+      toast.error("Failed to add domain.");
     }
   };
 
@@ -253,14 +254,14 @@ const SettingsPage = () => {
   const handleDeleteDomain = async () => {
     try {
       await deleteDomain(domainToDeleteIndex);
-      alert("Domain deleted successfully!");
+      toast.success("Domain deleted successfully!");
       const updatedDomains = await getDomain();
       setDomains(updatedDomains);
       setShowDeleteConfirmation(false);
       setDomainToDeleteIndex(null);
     } catch (error) {
       console.error("Error deleting domain:", error);
-      alert("Failed to delete domain.");
+      toast.error("Failed to delete domain.");
     }
   };
 
@@ -282,7 +283,7 @@ const SettingsPage = () => {
         );
       }
       await updateDomain(domainForm.id, requestData);
-      alert("Domain updated successfully!");
+      toast.success("Domain updated successfully!");
       const updatedDomains = await getDomain();
       setDomains(updatedDomains);
       setShowDomainForm(false);
@@ -294,7 +295,7 @@ const SettingsPage = () => {
       });
     } catch (error) {
       console.error("Error updating domain:", error);
-      alert("Failed to update domain.");
+      toast.error("Failed to update domain.");
     }
   };
 
@@ -329,16 +330,16 @@ const SettingsPage = () => {
 
       if (!formData.id) {
         await createSettings(formPayload); // createSettings now accepts FormData
-        alert("Settings created successfully!");
+        toast.success("Settings created successfully!");
       } else {
         await updateSettings(formData.id, formPayload); // updateSettings now accepts FormData
-        alert("Settings updated successfully!");
+        toast.success("Settings updated successfully!");
       }
 
       getSettings();
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Failed to save settings.");
+      toast.error("Failed to save settings.");
     } finally {
       setLoading(false);
     }

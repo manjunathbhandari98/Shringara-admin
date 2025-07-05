@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_API_URL;
 
@@ -84,14 +85,15 @@ export const deleteService = async (serviceId) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    toast.success("Service Deleted Successfully");
     return {
       message: "Service deleted successfully",
     };
   } catch (error) {
-    throw (
-      error.response?.data || {
-        message: "Failed to delete service",
-      }
+    toast.error(
+      `This service is linked to one or more sub-services or portfolios.
+Please remove or unlink them before deleting the service.`,
+      { removeDelay: 3000 }
     );
   }
 };

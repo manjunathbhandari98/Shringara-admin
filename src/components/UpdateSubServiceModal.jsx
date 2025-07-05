@@ -46,17 +46,11 @@ const UpdateSubServiceModal = ({ service, onClose, subService, onUpdate }) => {
         payload.append("image", formData.imageUrl);
       }
 
-      const response = await updateSubService(
+      const updated = await updateSubService(
         subService.id,
         service.id,
         payload
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to update sub-service.");
-      }
-
-      const updated = await response.json();
       onUpdate(updated);
       onClose();
     } catch (error) {
@@ -140,16 +134,23 @@ const UpdateSubServiceModal = ({ service, onClose, subService, onUpdate }) => {
                 <ImagePlus className="w-12 h-12" />
               )}
 
-              <label className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 cursor-pointer transition">
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("sub-service-image-input").click()
+                }
+                className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 cursor-pointer transition"
+              >
                 <ImagePlus className="w-8 h-8 text-white" />
                 <span className="text-white text-sm mt-1">Change Image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </label>
+              </button>
+              <input
+                type="file"
+                id="sub-service-image-input"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
             </div>
           </div>
           <div className="flex justify-end space-x-3 mt-4">

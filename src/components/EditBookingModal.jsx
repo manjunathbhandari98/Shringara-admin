@@ -1,16 +1,10 @@
 /* eslint-disable react/prop-types */
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { useBooking } from "../hooks/useBooking";
 import { useService } from "./../hooks/useService";
 
-const EditBookingModal = ({
-  booking,
-  onClose,
-  onUpdate,
-}) => {
+const EditBookingModal = ({ booking, onClose, onUpdate }) => {
   const { updateBooking } = useBooking();
   const [formData, setFormData] = useState({
     ...booking,
@@ -24,10 +18,7 @@ const EditBookingModal = ({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "serviceId" ||
-        name === "subServiceId"
-          ? Number(value)
-          : value,
+        name === "serviceId" || name === "subServiceId" ? Number(value) : value,
     }));
   };
 
@@ -36,21 +27,14 @@ const EditBookingModal = ({
     const updatedBookingData = {
       userId: formData.user?.id || null,
       location: formData.location || "N/A",
-      eventDate:
-        formData.eventDate?.split("T")[0] || "",
-      serviceId:
-        formData.services.id || booking.serviceId,
-      subServiceId:
-        formData.subServiceId ??
-        booking.subService.id,
+      eventDate: formData.eventDate?.split("T")[0] || "",
+      serviceId: formData.services.id || booking.serviceId,
+      subServiceId: formData.subServiceId ?? booking.subService.id,
       status: formData.status,
     };
 
     try {
-      await updateBooking(
-        booking.id,
-        updatedBookingData
-      );
+      await updateBooking(booking.id, updatedBookingData);
 
       // Ensure UI updates
 
@@ -59,57 +43,37 @@ const EditBookingModal = ({
 
       onClose();
     } catch (error) {
-      console.error(
-        "Error updating booking:",
-        error
-      );
-      alert("Failed to update booking");
+      console.error("Error updating booking:", error);
+      toast.error("Failed to update booking");
     }
   };
 
   return (
     <div className="fixed inset-0 z-10 flex items-center justify-center">
       <div className="bg-white p-6 rounded-xl shadow-2xl w-96 transform transition-all">
-        <h2 className="text-2xl font-bold mb-4 text-gray-700">
-          Edit Booking
-        </h2>
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        <h2 className="text-2xl font-bold mb-4 text-gray-700">Edit Booking</h2>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <select
             name="subServiceId"
             value={formData.subService.id || ""}
             onChange={handleChange}
             className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            <option value="">
-              Select a Service
-            </option>
+            <option value="">Select a Service</option>
             {services.map((service) => (
-              <optgroup
-                key={service.id}
-                label={service.name}
-              >
-                {service.subServices?.map(
-                  (subService) => (
-                    <option
-                      key={subService.id}
-                      value={subService.id}
-                    >
-                      {subService.name}
-                    </option>
-                  )
-                )}
+              <optgroup key={service.id} label={service.name}>
+                {service.subServices?.map((subService) => (
+                  <option key={subService.id} value={subService.id}>
+                    {subService.name}
+                  </option>
+                ))}
               </optgroup>
             ))}
           </select>
           <input
             type="date"
             name="date"
-            value={
-              formData.eventDate.split("T")[0]
-            }
+            value={formData.eventDate.split("T")[0]}
             onChange={handleChange}
             className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
@@ -130,18 +94,10 @@ const EditBookingModal = ({
             onChange={handleChange}
             className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            <option value="pending">
-              Pending
-            </option>
-            <option value="confirmed">
-              Confirmed
-            </option>
-            <option value="completed">
-              Completed
-            </option>
-            <option value="cancelled">
-              Cancelled
-            </option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
           </select>
 
           <div className="flex justify-end space-x-3 mt-4">

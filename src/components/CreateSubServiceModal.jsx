@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { ImagePlus, X } from "lucide-react";
 import { useState } from "react";
+import { createSubService } from "../services/serviceService";
 
 const CreateSubServiceModal = ({ service, onClose, onSubServiceCreated }) => {
   const [formData, setFormData] = useState({
@@ -44,19 +45,7 @@ const CreateSubServiceModal = ({ service, onClose, onSubServiceCreated }) => {
         payload.append("image", formData.imageUrl);
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/sub-service/service/${service.id}`,
-        {
-          method: "POST",
-          body: payload,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to create sub-service.");
-      }
-
-      const result = await response.json();
+      const result = await createSubService(service.id, payload); // ✅ FIXED
       onSubServiceCreated(result);
       onClose();
     } catch (error) {
@@ -124,10 +113,14 @@ const CreateSubServiceModal = ({ service, onClose, onSubServiceCreated }) => {
               Service Image
             </label>
             <div className="relative group w-full h-40 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
-              {formData.imageUrl && !(formData.imageUrl instanceof File) ? (
+              {formData.imageUrl ? (
                 <img
-                  src={formData.imageUrl}
-                  alt="Service"
+                  src={
+                    formData.imageUrl instanceof File
+                      ? URL.createObjectURL(formData.imageUrl)
+                      : formData.imageUrl
+                  }
+                  alt="Service Preview"
                   className="w-full h-full object-cover group-hover:blur-sm"
                 />
               ) : (

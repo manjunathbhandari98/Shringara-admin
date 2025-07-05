@@ -1,5 +1,6 @@
 import { Edit2, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import DeleteConfirmationModal from "../components/DeleteConfirmationPopup";
 import { useService } from "../hooks/useService";
 import {
@@ -21,6 +22,7 @@ const ManagePortfolio = () => {
   const { services } = useService();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -30,7 +32,6 @@ const ManagePortfolio = () => {
     fetchPortfolio();
   }, []);
 
-  // Cleanup blob URL
   useEffect(() => {
     return () => {
       if (formData.imageUrl instanceof File) {
@@ -87,36 +88,47 @@ const ManagePortfolio = () => {
     const { title, imageUrl, services } = formData;
 
     if (!title.trim() || !services.id || (!imageUrl && !editingItem)) {
-      alert("Please fill all required fields.");
+      toast.error("Please fill all required fields.");
       return;
     }
 
     const formPayload = new FormData();
+
+    // ✅ FIXED STRUCTURE: Use serviceId instead of nested services
     const formattedData = {
       title: title.trim(),
-      services: { id: services.id },
+      serviceId: services.id,
     };
+
     formPayload.append("portfolio", JSON.stringify(formattedData));
 
-    if (imageUrl && imageUrl instanceof File) {
-      formPayload.append("image", imageUrl);
+    if (formData.imageUrl instanceof File) {
+      formPayload.append("image", formData.imageUrl);
     }
 
     try {
+      setLoading(true);
       if (editingItem) {
         await updatePortfolio(editingItem.id, formPayload);
       } else {
         await createPortfolio(formPayload);
       }
+      setLoading(false);
       const updatedPortfolio = await getPortfolio();
       setPortfolioItems(updatedPortfolio);
       resetForm();
     } catch (error) {
       console.error("Error saving portfolio:", error);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetForm = () => {
+    if (formData.imageUrl instanceof File) {
+      URL.revokeObjectURL(formData.imageUrl);
+    }
     setFormData({
       title: "",
       imageUrl: "",
@@ -202,7 +214,7 @@ const ManagePortfolio = () => {
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm"
                   placeholder="Enter title"
                   required
                 />
@@ -216,7 +228,7 @@ const ManagePortfolio = () => {
                   name="services"
                   value={formData.services.id}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm"
                   required
                 >
                   <option value="">Select a Service</option>
@@ -232,12 +244,8 @@ const ManagePortfolio = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Image
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "imageUrl")}
-                  className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm p-2"
-                />
+
+                {/* Preview always comes from formData.imageUrl (URL or File) */}
                 {formData.imageUrl && (
                   <img
                     src={
@@ -249,6 +257,26 @@ const ManagePortfolio = () => {
                     className="mt-2 w-full h-32 object-cover rounded-md"
                   />
                 )}
+
+                {/* File input to replace the image (only when selecting new one) */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      // Revoke the old blob URL if exists
+                      if (formData.imageUrl instanceof File) {
+                        URL.revokeObjectURL(formData.imageUrl);
+                      }
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        imageUrl: file,
+                      }));
+                    }
+                  }}
+                  className="mt-2 block w-full rounded-lg border-gray-300 shadow-sm p-2"
+                />
               </div>
 
               <div className="flex justify-end space-x-3">
@@ -268,7 +296,35 @@ const ManagePortfolio = () => {
                     (!formData.imageUrl && !editingItem)
                   }
                 >
-                  {editingItem ? "Save Changes" : "Add Item"}
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg
+                        className="animate-spin mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        ></path>
+                      </svg>
+                      {editingItem ? "Saving..." : "Adding..."}
+                    </span>
+                  ) : editingItem ? (
+                    "Save Changes"
+                  ) : (
+                    "Add Item"
+                  )}
                 </button>
               </div>
             </form>

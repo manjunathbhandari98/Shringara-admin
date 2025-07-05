@@ -1,8 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-} from "react";
 import { Edit, Trash2 } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import EditBookingModal from "../components/EditBookingModal";
 import { useBooking } from "../hooks/useBooking";
 
@@ -14,86 +12,50 @@ const statusColors = {
 };
 
 const ManageBookings = () => {
-  const {
-    bookings,
-    setBookings,
-    deleteBooking,
-    updateBooking,
-  } = useBooking();
+  const { bookings, setBookings, deleteBooking, updateBooking } = useBooking();
 
-  const [selectedBooking, setSelectedBooking] =
-    useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] =
-    useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   const openEditModal = (booking) => {
     setSelectedBooking(booking);
   };
 
-  const closeEditModal = () =>
-    setSelectedBooking(null);
+  const closeEditModal = () => setSelectedBooking(null);
 
   const handleDeleteBooking = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this booking?"
-      )
-    )
+    if (!window.confirm("Are you sure you want to delete this booking?"))
       return;
     try {
       await deleteBooking(id);
-      setBookings((prev) =>
-        prev.filter((b) => b.id !== id)
-      );
+      setBookings((prev) => prev.filter((b) => b.id !== id));
     } catch (error) {
-      console.error(
-        "Delete error:",
-        error.message
-      );
-      alert(
-        error.message ||
-          "Failed to delete booking"
-      );
+      console.error("Delete error:", error.message);
+      toast.error(error.message || "Failed to delete booking");
     }
   };
 
-  const handleBookingUpdate = async (
-    bookingId,
-    updatedBooking
-  ) => {
+  const handleBookingUpdate = async (bookingId, updatedBooking) => {
     try {
       setBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, ...updatedBooking }
-            : b
-        )
+        prev.map((b) => (b.id === bookingId ? { ...b, ...updatedBooking } : b))
       );
 
       closeEditModal();
     } catch (error) {
-      console.error(
-        "Error updating booking:",
-        error
-      );
-      alert("Failed to update booking");
+      console.error("Error updating booking:", error);
+      toast.error("Failed to update booking");
     }
   };
 
-  const filteredBookings = bookings.filter(
-    (booking) => {
-      return (
-        (booking.user?.name
-          ?.toLowerCase()
-          ?.includes(search.toLowerCase()) ??
-          false) &&
-        (filterStatus
-          ? booking.status === filterStatus
-          : true)
-      );
-    }
-  );
+  const filteredBookings = bookings.filter((booking) => {
+    return (
+      (booking.user?.name?.toLowerCase()?.includes(search.toLowerCase()) ??
+        false) &&
+      (filterStatus ? booking.status === filterStatus : true)
+    );
+  });
 
   return (
     <div className="relative p-6 transition">
@@ -106,29 +68,19 @@ const ManageBookings = () => {
           type="text"
           placeholder="Search by customer name"
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           className="p-2 border rounded-lg focus:none"
         />
         <select
           value={filterStatus}
-          onChange={(e) =>
-            setFilterStatus(e.target.value)
-          }
+          onChange={(e) => setFilterStatus(e.target.value)}
           className="p-2 border rounded-lg focus:none"
         >
           <option value="">All</option>
           <option value="pending">Pending</option>
-          <option value="confirmed">
-            Confirmed
-          </option>
-          <option value="completed">
-            Completed
-          </option>
-          <option value="cancelled">
-            Cancelled
-          </option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -161,23 +113,10 @@ const ManageBookings = () => {
           </thead>
           <tbody>
             {filteredBookings.map((booking) => (
-              <tr
-                key={booking.id}
-                className="border-b hover:bg-gray-50"
-              >
-                <td className="px-6 py-3">
-                  {booking.user?.name}
-                </td>
-                <td className="px-6 py-3">
-                  {booking.subService.name}
-                </td>
-                <td className="px-6 py-3">
-                  {
-                    booking.eventDate.split(
-                      "T"
-                    )[0]
-                  }
-                </td>
+              <tr key={booking.id} className="border-b hover:bg-gray-50">
+                <td className="px-6 py-3">{booking.user?.name}</td>
+                <td className="px-6 py-3">{booking.subService.name}</td>
+                <td className="px-6 py-3">{booking.eventDate.split("T")[0]}</td>
                 <td className="px-6 py-3 font-semibold">
                   {booking.subService.price}
                 </td>
@@ -186,14 +125,10 @@ const ManageBookings = () => {
                     statusColors[booking.status]
                   }`}
                 >
-                  {booking.status
-                    ?.charAt(0)
-                    .toUpperCase() +
+                  {booking.status?.charAt(0).toUpperCase() +
                     booking.status.slice(1)}
                 </td>
-                <td className="px-6 py-3">
-                  {booking.user?.phone}
-                </td>
+                <td className="px-6 py-3">{booking.user?.phone}</td>
                 <td className="px-6 py-3 text-center flex justify-center gap-4">
                   <button
                     className="text-blue-600 hover:text-blue-800 transition"
@@ -205,11 +140,7 @@ const ManageBookings = () => {
                   </button>
                   <button
                     className="text-red-600 hover:text-red-800 transition"
-                    onClick={() =>
-                      handleDeleteBooking(
-                        booking.id
-                      )
-                    }
+                    onClick={() => handleDeleteBooking(booking.id)}
                   >
                     <Trash2 size={18} />
                   </button>

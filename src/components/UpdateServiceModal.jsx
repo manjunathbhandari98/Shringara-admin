@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { updateService } from "../services/serviceService";
 
 const UpdateServiceModal = ({ service, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
@@ -41,20 +42,9 @@ const UpdateServiceModal = ({ service, onClose, onUpdate }) => {
         payload.append("image", formData.imageUrl);
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/services/${service.id}`,
-        {
-          method: "PUT",
-          body: payload,
-        }
-      );
+      const response = await updateService(service.id, payload);
 
-      if (!response.ok) {
-        throw new Error("Failed to update service.");
-      }
-
-      const result = await response.json();
-      onUpdate(result);
+      onUpdate(response);
       onClose();
     } catch (error) {
       console.error("Error updating service:", error);
