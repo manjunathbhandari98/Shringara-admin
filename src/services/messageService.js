@@ -1,51 +1,39 @@
 import axios from "axios";
 import { getAuthToken } from "./serviceService";
 
-const BASE_URL = import.meta.env
-  .VITE_REACT_APP_API_URL;
+const BASE_URL = import.meta.env.VITE_REACT_APP_API_URL;
 
 export const getMessages = async () => {
   try {
     const token = getAuthToken();
-    const response = await axios.get(
-      `${BASE_URL}/message`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.get(`${BASE_URL}/message`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error(error);
   }
 };
 
-export const getMessageByEmail = async (
-  email
-) => {
+export const getMessageByEmail = async (email) => {
   try {
     const token = getAuthToken();
-    const response = await axios.get(
-      `${BASE_URL}/message/${email}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.get(`${BASE_URL}/message/${email}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error(error);
   }
 };
 
-export const sendReply = async (
-  email,
-  content
-) => {
+export const sendReply = async (email, content) => {
   try {
     const token = getAuthToken();
 
@@ -54,7 +42,7 @@ export const sendReply = async (
     formData.append("content", content);
 
     await axios.post(
-      `${BASE_URL}/message/admin-reply`,
+      `${BASE_URL}/message/reply`,
       formData, // ✅ Send form-data instead of JSON
       {
         headers: {
@@ -64,36 +52,25 @@ export const sendReply = async (
       }
     );
   } catch (error) {
-    console.error(
-      "Error:",
-      error.response?.data || error.message
-    );
+    console.error("Error:", error.response?.data || error.message);
   }
 };
 
-
-export const deleteMessage = async(messageId) =>{
+export const deleteMessage = async (messageId) => {
   try {
     const token = getAuthToken();
-    await axios.delete(
-      `${BASE_URL}/message/${messageId}`,
-      {
-        headers:{
-          Authorization:`Bearer ${token}`
-        }
-      }
-    )
+    await axios.delete(`${BASE_URL}/message/${messageId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     getMessages();
   } catch (error) {
     throw new Error("Message Can't be Deleted");
-    
   }
-}
+};
 
-export const sendReplyEmail = async (
-  email,
-  message
-) => {
+export const sendReplyEmail = async (email, message) => {
   try {
     const token = getAuthToken();
     await axios.post(

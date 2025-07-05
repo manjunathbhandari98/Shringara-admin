@@ -1,23 +1,8 @@
 /* eslint-disable react/prop-types */
-import {
-  X,
-  ImagePlus,
-  FormInput,
-} from "lucide-react";
-import React, {
-  useEffect,
-  useState,
-} from "react";
-import {
-  updateService,
-  uploadImage,
-} from "../services/serviceService";
+import { ImagePlus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const UpdateServiceModal = ({
-  service,
-  onClose,
-  onUpdate,
-}) => {
+const UpdateServiceModal = ({ service, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
     name: service.name || "",
     description: service.description || "",
@@ -32,34 +17,47 @@ const UpdateServiceModal = ({
     });
   }, [service]);
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
-
     if (file) {
-      try {
-        const imageUrl = await uploadImage(file);
-        setFormData({ ...formData, imageUrl });
-      } catch (error) {
-        console.error(
-          "Image upload failed:",
-          error
-        );
-      }
+      setFormData((prev) => ({
+        ...prev,
+        imageUrl: file,
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log(formData);
-      const updatedService = await updateService(
-        service.id,
-        formData
+      const payload = new FormData();
+      const data = {
+        name: formData.name,
+        description: formData.description,
+      };
+
+      payload.append("service", JSON.stringify(data));
+      if (formData.imageUrl instanceof File) {
+        payload.append("image", formData.imageUrl);
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/services/${service.id}`,
+        {
+          method: "PUT",
+          body: payload,
+        }
       );
-      onUpdate(updatedService); // Call onUpdate to update UI
-      onClose(); // Close modal after updating
+
+      if (!response.ok) {
+        throw new Error("Failed to update service.");
+      }
+
+      const result = await response.json();
+      onUpdate(result);
+      onClose();
     } catch (error) {
-      console.error(error);
+      console.error("Error updating service:", error);
     }
   };
 
@@ -77,10 +75,7 @@ const UpdateServiceModal = ({
             <X className="w-6 h-6 cursor-pointer" />
           </button>
         </div>
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Service Name
@@ -121,16 +116,17 @@ const UpdateServiceModal = ({
               Service Image
             </label>
             <div className="relative group w-full h-40 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src={formData.imageUrl}
-                alt="Service"
-                className="w-full h-full object-cover group-hover:blur-sm"
-              />
+              {formData.imageUrl && !(formData.imageUrl instanceof File) && (
+                <img
+                  src={formData.imageUrl}
+                  alt="Service"
+                  className="w-full h-full object-cover group-hover:blur-sm"
+                />
+              )}
+
               <label className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 cursor-pointer transition">
                 <ImagePlus className="w-8 h-8 text-white" />
-                <span className="text-white text-sm mt-1">
-                  Change Image
-                </span>
+                <span className="text-white text-sm mt-1">Change Image</span>
                 <input
                   type="file"
                   accept="image/*"

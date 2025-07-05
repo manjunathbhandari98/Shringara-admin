@@ -1,18 +1,14 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env
-  .VITE_REACT_APP_API_URL;
+const BASE_URL = import.meta.env.VITE_REACT_APP_API_URL;
 
 // Function to retrieve JWT token from localStorage
-export const getAuthToken = () =>
-  localStorage.getItem("authToken");
+export const getAuthToken = () => localStorage.getItem("authToken");
 
 // Fetch all services
 export const getAllServices = async () => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/services`
-    );
+    const response = await axios.get(`${BASE_URL}/services`);
     return response.data;
   } catch (error) {
     throw (
@@ -24,13 +20,9 @@ export const getAllServices = async () => {
 };
 
 // Fetch a single service by ID
-export const getServiceById = async (
-  serviceId
-) => {
+export const getServiceById = async (serviceId) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/services/${serviceId}`
-    );
+    const response = await axios.get(`${BASE_URL}/services/${serviceId}`);
     return response.data;
   } catch (error) {
     throw (
@@ -42,21 +34,14 @@ export const getServiceById = async (
 };
 
 // Create a new service
-export const createService = async (
-  serviceData
-) => {
+export const createService = async (serviceData) => {
   try {
     const token = getAuthToken();
-    const response = await axios.post(
-      `${BASE_URL}/services`,
-      serviceData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.post(`${BASE_URL}/services`, serviceData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   } catch (error) {
     throw (
@@ -68,10 +53,7 @@ export const createService = async (
 };
 
 // Update an existing service
-export const updateService = async (
-  serviceId,
-  updateData
-) => {
+export const updateService = async (serviceId, updateData) => {
   try {
     const token = getAuthToken();
     const response = await axios.put(
@@ -79,7 +61,6 @@ export const updateService = async (
       updateData,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
@@ -95,19 +76,14 @@ export const updateService = async (
 };
 
 // Delete a service
-export const deleteService = async (
-  serviceId
-) => {
+export const deleteService = async (serviceId) => {
   try {
     const token = getAuthToken();
-    await axios.delete(
-      `${BASE_URL}/services/${serviceId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    await axios.delete(`${BASE_URL}/services/${serviceId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return {
       message: "Service deleted successfully",
     };
@@ -121,13 +97,9 @@ export const deleteService = async (
 };
 
 // Fetch all subservices of a service
-export const getSubServices = async (
-  serviceId
-) => {
+export const getSubServices = async (serviceId) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/services/${serviceId}`
-    );
+    const response = await axios.get(`${BASE_URL}/services/${serviceId}`);
     return response.data;
   } catch (error) {
     throw (
@@ -139,13 +111,9 @@ export const getSubServices = async (
 };
 
 // Fetch a single subservice by ID
-export const getSubServiceById = async (
-  subServiceId
-) => {
+export const getSubServiceById = async (subServiceId) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/subservices/${subServiceId}`
-    );
+    const response = await axios.get(`${BASE_URL}/subservices/${subServiceId}`);
     return response.data;
   } catch (error) {
     throw (
@@ -157,10 +125,7 @@ export const getSubServiceById = async (
 };
 
 // Create a new subservice
-export const createSubService = async (
-  serviceId,
-  subServiceData
-) => {
+export const createSubService = async (serviceId, subServiceData) => {
   try {
     const token = getAuthToken();
 
@@ -169,7 +134,6 @@ export const createSubService = async (
       subServiceData,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
@@ -186,11 +150,7 @@ export const createSubService = async (
 };
 
 // Update an existing subservice
-export const updateSubService = async (
-  subServiceId,
-  serviceId,
-  updateData
-) => {
+export const updateSubService = async (subServiceId, serviceId, updateData) => {
   try {
     const token = getAuthToken();
     const response = await axios.put(
@@ -198,7 +158,6 @@ export const updateSubService = async (
       updateData,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
@@ -214,20 +173,14 @@ export const updateSubService = async (
 };
 
 // Delete a subservice
-export const deleteSubService = async (
-  serviceId,
-  subServiceId
-) => {
+export const deleteSubService = async (serviceId, subServiceId) => {
   try {
     const token = getAuthToken();
-    await axios.delete(
-      `${BASE_URL}/subservices/${serviceId}/${subServiceId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    await axios.delete(`${BASE_URL}/subservices/${serviceId}/${subServiceId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return {
       message: "Subservice deleted successfully",
     };
@@ -247,22 +200,15 @@ export const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await axios.post(
-      `${BASE_URL}/upload/image`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.post(`${BASE_URL}/upload/image`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     // Construct the full URL here
     const relativePath = response.data; // "uploads/customized-theme.jpg"
-    const fullImageUrl = `${BASE_URL}/files/${relativePath
-      .split("/")
-      .pop()}`; //Extract filename only.
+    const fullImageUrl = `${BASE_URL}/files/${relativePath.split("/").pop()}`; //Extract filename only.
 
     return fullImageUrl; // Return the full URL
   } catch (error) {

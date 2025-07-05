@@ -1,16 +1,8 @@
 /* eslint-disable react/prop-types */
-import React, { useState } from "react";
-import {
-  createSubService,
-  uploadImage,
-} from "../services/serviceService";
 import { ImagePlus, X } from "lucide-react";
+import { useState } from "react";
 
-const CreateSubServiceModal = ({
-  service,
-  onClose,
-  onSubServiceCreated,
-}) => {
+const CreateSubServiceModal = ({ service, onClose, onSubServiceCreated }) => {
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -19,57 +11,57 @@ const CreateSubServiceModal = ({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
-
     if (file) {
-      try {
-        const imageUrl = await uploadImage(file);
-        setFormData({ ...formData, imageUrl });
-      } catch (error) {
-        console.error(
-          "Image upload failed:",
-          error
-        );
-        setErrorMsg(
-          "Image upload failed. Try again."
-        );
-      }
+      setFormData((prevData) => ({
+        ...prevData,
+        imageUrl: file,
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
-    console.log("service", service);
-
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
     if (!service?.id) {
-      setErrorMsg(
-        "Invalid service. Please try again."
-      );
+      setErrorMsg("Invalid service. Please try again.");
       setLoading(false);
       return;
     }
 
     try {
-      const newService = await createSubService(
-        service.id,
-        formData
+      const payload = new FormData();
+      const subServiceData = {
+        name: formData.name,
+        price: formData.price,
+      };
+
+      payload.append("subService", JSON.stringify(subServiceData));
+      if (formData.imageUrl instanceof File) {
+        payload.append("image", formData.imageUrl);
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/sub-service/service/${service.id}`,
+        {
+          method: "POST",
+          body: payload,
+        }
       );
-      onSubServiceCreated(newService);
-      console.log("Submitted Data:", formData);
+
+      if (!response.ok) {
+        throw new Error("Failed to create sub-service.");
+      }
+
+      const result = await response.json();
+      onSubServiceCreated(result);
       onClose();
     } catch (error) {
-      console.error(
-        "Error creating sub-service:",
-        error
-      );
-      setErrorMsg(
-        error.message ||
-          "Failed to create sub-service."
-      );
+      console.error("Error creating sub-service:", error);
+      setErrorMsg(error.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -89,15 +81,8 @@ const CreateSubServiceModal = ({
             <X className="w-6 h-6 cursor-pointer" />
           </button>
         </div>
-        {errorMsg && (
-          <p className="text-red-500 text-sm mb-4">
-            {errorMsg}
-          </p>
-        )}
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        {errorMsg && <p className="text-red-500 text-sm mb-4">{errorMsg}</p>}
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Service Name
@@ -126,9 +111,7 @@ const CreateSubServiceModal = ({
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  price:
-                    parseFloat(e.target.value) ||
-                    "",
+                  price: parseFloat(e.target.value) || "",
                 })
               }
               required
@@ -141,7 +124,7 @@ const CreateSubServiceModal = ({
               Service Image
             </label>
             <div className="relative group w-full h-40 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
-              {formData.imageUrl ? (
+              {formData.imageUrl && !(formData.imageUrl instanceof File) ? (
                 <img
                   src={formData.imageUrl}
                   alt="Service"
@@ -152,9 +135,7 @@ const CreateSubServiceModal = ({
               )}
               <label className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 cursor-pointer transition">
                 <ImagePlus className="w-8 h-8 text-white" />
-                <span className="text-white text-sm mt-1">
-                  Change Image
-                </span>
+                <span className="text-white text-sm mt-1">Change Image</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -177,9 +158,7 @@ const CreateSubServiceModal = ({
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
               disabled={loading}
             >
-              {loading
-                ? "Saving..."
-                : "Save Changes"}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
