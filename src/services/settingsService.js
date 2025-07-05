@@ -39,7 +39,6 @@ export const updateSettings = async (id, updatedData) => {
       updatedData,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       }
@@ -56,7 +55,6 @@ export const addAdmin = async (adminData) => {
   try {
     await axios.post(`${BASE_URL}/auth/register`, adminData, {
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
@@ -82,7 +80,6 @@ export const updateAdmin = async (admin) => {
   try {
     const response = await axios.put(`${BASE_URL}/auth/update`, admin, {
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
@@ -120,7 +117,6 @@ export const addDomain = async (requestData) => {
   try {
     const response = await axios.post(`${BASE_URL}/domain`, requestData, {
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
