@@ -1,7 +1,6 @@
 import { Edit } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
-import { uploadImage } from "../services/serviceService";
 import {
   addAdmin,
   addDomain,
@@ -115,18 +114,13 @@ const SettingsPage = () => {
     }));
   };
 
-  const handleImageChange = async (e, fieldName) => {
+  const handleImageChange = (e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
-      try {
-        const imageUrl = await uploadImage(file);
-        setFormData((prevData) => ({
-          ...prevData,
-          [fieldName]: imageUrl, // Update correct field
-        }));
-      } catch (error) {
-        console.error("Image upload failed:", error);
-      }
+      setFormData((prevData) => ({
+        ...prevData,
+        [fieldName]: file,
+      }));
     }
   };
 
@@ -307,23 +301,44 @@ const SettingsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      const formPayload = new FormData();
+
+      const settingsData = {
+        appName: formData.appName,
+        email: formData.email,
+        phone: formData.phone,
+        instaUrl: formData.instaUrl,
+        fbUrl: formData.fbUrl,
+        xurl: formData.xurl,
+      };
+
+      formPayload.append("settings", JSON.stringify(settingsData));
+
+      // Only append images if new ones were selected
+      if (formData.logoUrl && formData.logoUrl instanceof File)
+        formPayload.append("logo", formData.logoUrl);
+      if (formData.homeBannerUrl && formData.homeBannerUrl instanceof File)
+        formPayload.append("homeBanner", formData.homeBannerUrl);
+      if (
+        formData.portfolioBannerUrl &&
+        formData.portfolioBannerUrl instanceof File
+      )
+        formPayload.append("portfolioBanner", formData.portfolioBannerUrl);
+
       if (!formData.id) {
-        // No ID => call createSettings
-        await createSettings(formData); // You need to implement this function in your service if not already
+        await createSettings(formPayload); // createSettings now accepts FormData
         alert("Settings created successfully!");
-        setLoading(false);
       } else {
-        // ID exists => update existing settings
-        await updateSettings(formData.id, formData);
+        await updateSettings(formData.id, formPayload); // updateSettings now accepts FormData
         alert("Settings updated successfully!");
-        setLoading(false);
       }
-      getSettings(); // Re-fetch settings to update state
+
+      getSettings();
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Failed to save settings.");
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -397,10 +412,15 @@ const SettingsPage = () => {
                   } border rounded-lg overflow-hidden flex items-center justify-center bg-gray-100`}
                 >
                   <img
-                    src={state || "/placeholder.png"}
+                    src={
+                      state instanceof File
+                        ? URL.createObjectURL(state)
+                        : state || "/placeholder.png"
+                    }
                     alt={label}
                     className="w-full h-full object-cover"
                   />
+
                   <input
                     type="file"
                     className="absolute inset-0 opacity-0 cursor-pointer"
